@@ -113,3 +113,86 @@ for i, idx in enumerate(results[0]):
 
 
 
+
+
+# 12. Hit@K Evaluation
+
+def evaluate_retriever(query, relevant_chunks):
+
+    # Generate query embedding
+    query_embedding = model.encode([query])
+
+    # Search top 5 chunks
+    distances, results = index.search(
+        query_embedding.astype("float32"), 5
+    )
+
+    retrieved_chunks = results[0].tolist()
+
+    print("\nQuestion:", query)
+    print("Retrieved Chunk IDs:", retrieved_chunks)
+    print("Distances:", distances[0].tolist())
+    print("Relevant Chunk IDs:", relevant_chunks)
+
+    # Calculate Hit@1, Hit@3 and Hit@5
+    hit1 = int(any(
+        idx in relevant_chunks for idx in retrieved_chunks[:1]
+    ))
+
+    hit3 = int(any(
+        idx in relevant_chunks for idx in retrieved_chunks[:3]
+    ))
+
+    hit5 = int(any(
+        idx in relevant_chunks for idx in retrieved_chunks[:5]
+    ))
+
+    print("Hit@1:", hit1)
+    print("Hit@3:", hit3)
+    print("Hit@5:", hit5)
+
+    return hit1, hit3, hit5
+
+
+# Test Dataset
+# Replace example IDs with verified relevant chunk IDs
+
+test_queries = [
+    {
+        "question": "What is the company's leave policy?",
+        "relevant_chunks": [10]
+    },
+    {
+        "question": "What are employee responsibilities?",
+        "relevant_chunks": [15]
+    },
+    {
+        "question": "What are the working hours?",
+        "relevant_chunks": [20]
+    }
+]
+
+# Run Evaluation
+
+total_hit1 = 0
+total_hit3 = 0
+total_hit5 = 0
+
+for item in test_queries:
+
+    h1, h3, h5 = evaluate_retriever(
+        item["question"],
+        item["relevant_chunks"]
+    )
+
+    total_hit1 += h1
+    total_hit3 += h3
+    total_hit5 += h5
+
+total = len(test_queries)
+
+print("\n========== FINAL EVALUATION ==========")
+
+print("Hit@1:", round(total_hit1 / total * 100, 2), "%")
+print("Hit@3:", round(total_hit3 / total * 100, 2), "%")
+print("Hit@5:", round(total_hit5 / total * 100, 2), "%")
